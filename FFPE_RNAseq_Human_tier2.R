@@ -1,3 +1,4 @@
+#install.packages("FactoMineR")
 library(DESeq2)
 library(plotly)
 library("FactoMineR")
@@ -14,27 +15,39 @@ library(gplots)
 #library("DT",lib.loc="/home/wud3/R/x86_64-pc-linux-gnu-library/3.4/")
 #library("heatmaply",lib.loc="/home/wud3/R/x86_64-pc-linux-gnu-library/3.4/")
 rm(list=ls())
-#a1=read.table("AP-5782--11--08--2018_COUNTS.csv",sep=',',header=T,row.names=1,check=F,comment.char="")
+#a1=read.table("JL-6152--01--14--2019_COUNTS_new.csv",sep=',',header=T,row.names=1,check=F,comment.char="")
 args=commandArgs(TRUE)
 count_file <- args[1]
 sample_info <-args[2]
 comparison <- args[3]
 project <- args[4]
+#org <- args[5]
 a1=read.table(count_file, sep=',',header=T,row.names=1,check=F,comment.char="")
 a2=read.table(sample_info,sep=',',header=T)
 a3=read.table(comparison,sep=',',header=F)
-#a2=read.table("AP-5782--11--08--2018_sample_info.csv",sep=',',header=T)
-#a3=read.table("AP-5782--11--08--2018_comparisons.csv",sep=',',header=F)
-#project = "AP-5782--11--08--2018"
-comps <- as.matrix(a3)
+#a2=read.table("JL-6152--01--14--2019_sample_info.csv",sep=',',header=T)
+#a3=read.table("JL-6152--01--14--2019_comparisons.csv",sep=',',header=F)
+#project = "JL-6152--01--14--2019"
+comps <- as.matrix(a3) 
 
 colnames(a1) <- as.matrix(a2)[,2]
-data<-a1[-grep("ERCC-",rownames(a1)),]
-countdataraw=round(data[rowSums(a1)>0,])
+#data<-a1[-grep("ERCC-",rownames(a1)),]
+countdataraw=round(a1[rowSums(a1)>0,])
 countdata<-as.matrix(countdataraw)
 dim(countdata)
-
-
+temp <- data.frame(countdata)
+temp$Gene <- row.names(temp)
+#library("AnnotationDbi",lib.loc="/home/genomics/anaconda2/lib/R/library/") #add gene name to the file based on ENSEMBL
+library("AnnotationDbi")
+library("org.Hs.eg.db")
+temp$symbol = mapIds(org.Hs.eg.db,
+                          keys=temp$Gene, 
+                          column="SYMBOL",
+                          keytype="ENSEMBL",
+                          multiVals="first")
+row.names(temp) <- paste(temp$Gene,temp$symbol, sep = "_")
+n <- dim(a2)[1]
+countdata <- as.matrix(temp[,1:n])
 condition<-factor(as.matrix(a2)[,3])
 coldata <- data.frame(row.names=colnames(countdata), condition)
 dds <- DESeqDataSetFromMatrix(countData=countdata, colData=coldata, design=~condition)
@@ -49,7 +62,7 @@ dat.norm<-t(assay(rld)[select, ])
 dat.norm<-data.frame(dat.norm,condition)
 res.pca=PCA(dat.norm,ncp=5,scale.unit=T,graph=F,quali.sup=ncol(dat.norm))
 
-pdf(paste("./",project,"_PCA_all_samples.pdf",sep=""),16,12)
+pdf(paste(project,"_PCA_all_samples.pdf",sep=""),16,12)
 plot.PCA(res.pca,axes=c(1,2),habillage=ncol(dat.norm),cex=1)
 #dev.off()
 plot.PCA(res.pca,axes=c(1,2),habillage=ncol(dat.norm),cex=2,label='none')
@@ -124,9 +137,10 @@ for (i in 1:dim(comps)[1]) {
   }
   if (n1 < 20) {
     resSig=subset(eval(parse(text=paste0("resdata", i))), pvalue<0.1)
-    write.csv(resSig,file=paste(name,"_DEGs_p0.1.csv",sep=''), row.names=F)
+    write.csv(resSig,file=paste(name,"_DEGs_p0.05.csv",sep=''), row.names=F)
     sig_DEGs <- "p < 0.05"
   }
-  rmarkdown::render("/home/genomics/genomics/apps/RNAseq_tier2/Interactive_report_RNAseq.Rmd", params = list(data = a1, info = a2, comparison = a3, project = project), output_file = paste0(name, ".html"),output_dir="./")
-  i=i+1
+  rmarkdown::render("/home/genomics/genomics/apps/RNAseq_tier2/Interactive_report_RNAseq.Rmd", params = list(data = a1, info = a2, comparison = a3, project = project), output_file = paste0(name, ".html"), output_dir="./")
+  i=i+1 
 };rm(i)
+

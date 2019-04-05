@@ -1,6 +1,6 @@
 ---
 title: "RNA-seq Differential Expression Analysis Report (`r name`)"
-author: "[Genomics Core (Cedars-Sinai)](https://www.cedars-sinai.edu/Research/Research-Cores/Genomics-Core/)" 
+author: "[Genomics Core (Cedars-Sinai)](https://www.cedars-sinai.edu/Research/Research-Cores/Genomics-Core/)"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output:
   html_document: default
@@ -21,14 +21,12 @@ knitr::opts_chunk$set(echo = TRUE)
 This is an **R Markdown** document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
 ```{r logo, echo=FALSE}
-#htmltools::img(src = knitr::image_uri(file.path("/common/genomics-core/apps/multiqc/Genomics_Core_Logo.jpg")), 
-#               alt = 'logo', 
+#htmltools::img(src = knitr::image_uri(file.path("/common/genomics-core/apps/multiqc/Genomics_Core_Logo.jpg")),
+#               alt = 'logo',
 #               style = 'position:absolute; top:0; right:0; padding:10px;')
-
-#htmltools::img(src = knitr::image_uri(file.path("/home/genomics/genomics/apps/multiqc/Genomics_Core_Logo.jpg")), 
-#               alt = 'logo', 
+#htmltools::img(src = knitr::image_uri(file.path("/home/genomics/genomics/apps/multiqc/Genomics_Core_Logo.jpg")),
+#               alt = 'logo',
 #               style = 'position:absolute; top:0; right:0; padding:10px;')
-
 ```
 
 
@@ -55,13 +53,13 @@ This is an **R Markdown** document. Markdown is a simple formatting syntax for a
 
 
 ### - Data Overview
-* We start by reading in the data. There are `r dim(data)[1]` genes of `r dim(countdata_1)[2]` samples in the project. Samples are labeled as `r colnames(countdata_1)`, representing `r length(levels(condition))` (i.e. `r paste(levels(condition),collapse=", ")`) groups. 
-* After removing genes with expression equal to 0, we have `r dim(countdata_1)[1]` genes for further analysis. 
+* We start by reading in the data. There are `r dim(data)[1]` genes of `r dim(countdata_1)[2]` samples in the project. Samples are labeled as `r colnames(countdata_1)`, representing `r length(levels(condition))` (i.e. `r paste(levels(condition),collapse=", ")`) groups.
+* After removing genes with expression equal to 0, we have `r dim(countdata_1)[1]` genes for further analysis.
 
 
 ### - Principal Component Analysis for RNAseq samples
 
-* PCA plots of RNA-seq data, based on the top 500 genes by variance across all samples were generated. "`r levels(condition)[1]`" and "`r levels(condition)[2]`" groups are represented in red and blue, repsectively.  
+* PCA plots of RNA-seq data, based on the top 500 genes by variance across all samples were generated. "`r levels(condition)[1]`" and "`r levels(condition)[2]`" groups are represented in red and blue, repsectively.
 \
 ```{r interactive PCA, echo=FALSE, message=FALSE, fig.height = 5, fig.width = 16}
 intgroup="condition"
@@ -80,7 +78,6 @@ PCA1_3 <- plot_ly(pca_coord, x = pca_coord$Dim.1, y = pca_coord$Dim.3, text = ro
 PCA2_3 <- plot_ly(pca_coord, x = pca_coord$Dim.2, y = pca_coord$Dim.3, text = rownames(pca_coord), color = intgroup.df$condition, colors = rainbow(length(levels(factor(condition))), s=0.5), marker = list(size = 10)) %>%
   add_markers() %>%
   layout(xaxis = list(title = lab.y, zeroline = FALSE),yaxis = list(title = lab.z, zeroline = FALSE))
-
 p <- subplot(PCA1_2, PCA1_3, PCA2_3, nrows = 1, titleX = TRUE, titleY = TRUE, margin = c(0.05, 0.05, 0.05, 0.05))
 #p
 p %>% layout(annotations = list(
@@ -88,13 +85,12 @@ p %>% layout(annotations = list(
  list(x = 0.52 , y = 1.05, text = "PC1 vs PC3", showarrow = F, xref='paper', yref='paper'),
  list(x = 0.89 , y = 1.05, text = "PC2 vs PC3", showarrow = F, xref='paper', yref='paper'))
 )
-
 ```
 
 
 
-* 3D_PCA was generated using the 500 genes that showing the highest variation. `r levels(condition)[1]` and `r levels(condition)[2]` groups are represented in red and blue, repsectively. 
-\ 
+* 3D_PCA was generated using the 500 genes that showing the highest variation. `r levels(condition)[1]` and `r levels(condition)[2]` groups are represented in red and blue, repsectively.
+\
 ```{r interactive plot,echo=FALSE, message=FALSE, fig.height = 6, fig.width = 6}
 pca <- prcomp(t(assay(rld_1)[select_1, ]),scale. = TRUE)
 percentVar <- pca$sdev^2/sum(pca$sdev^2)
@@ -126,23 +122,21 @@ gene_list <- gsub(".*_","",resdata$Gene) #remove all and before up to "_"
 resdata$Gene <- gene_list
 colnames(resdata)[3]<-"log2FC"
 colnames(resdata)[5]<-"p_adj"
-
 ```
 ### - List of significant DEGs (differentially expressed genes)
 * Significance definition
      + Default significance: p_adj < 0.05
      + Optimized significance threshold is defined based on the number of DEGs
      + DEGs cutoff is flexible
- 
+
 Number of DEGs (p_adj threshold)             | Optimized significance threshold
 -------------------------------------------- | ------------------------------------
 [200, 2000) (p_adj<0.05)                     | p_adj < 0.05
 >=2000 (p_adj<0.05) and <2000 (p_adj<0.01)   | p_adj < 0.01
 >=2000 (p_adj<0.01)                          | p_adj < 0.01 and \|FC\|  >= 2
 [20,200) (p_adj<0.05)                        | p_adj < 0.1
-<20 (p_adj<0.05)                             | p < 0.1  
-
-* `r dim(resSig)[1]` genes were identified as significant DEGs (`r name`; `r sig_DEGs`), where `r dim(subset(resSig, log2FC>=0))[1]` were upregulated and `r dim(subset(resSig, log2FC<0))[1]` were downregulated. 
+<20 (p_adj<0.05)                             | p < 0.05
+* `r dim(resSig)[1]` genes were identified as significant DEGs (`r name`; `r sig_DEGs`), where `r dim(subset(resSig, log2FC>=0))[1]` were upregulated and `r dim(subset(resSig, log2FC<0))[1]` were downregulated.
 * The table is showing all genes.  Please check CSV file for all details.
      + basemean = average expression value across all samples
      + p_adj = adjusted p value
@@ -155,8 +149,8 @@ datatable(format(resdata[, 1:5], digits=2, justify="centre"), caption = htmltool
 ```
 
 ### - Heatmap of DEGs across all samples
-* `r dim(dat.norm_2)[1]` genes with significant variances across the `r dim(dat.norm_2)[2]` samples were utilized to make the heatmap. 
-*  Zoom in to see gene names. 
+* `r dim(dat.norm_2)[1]` genes with significant variances across the `r dim(dat.norm_2)[2]` samples were utilized to make the heatmap.
+*  zoom in to see gene names.
 \
 \
 ```{r interactive_heatmap, echo=FALSE, message=FALSE, warning=FALSE, fig.height = 10, fig.width = 10}
@@ -177,10 +171,14 @@ rowv=as.dendrogram(hclust(as.dist(1-cor(t(dat.norm_2)))))
 #p <- heatmaply(dat.norm_2,col=colorRampPalette(c("blue","black","yellow"))(256),k_col=2,Rowv=rowv,dendrogram='row',Colv=colv, scale="row",cexRow =0.5,trace="none",showticklabels=c(TRUE,FALSE),density.info="none",keysize=.8,key.xlab="")
 p <- heatmaply(dat.norm_2,col=colorRampPalette(c("blue","black","yellow"))(256),k_col=2,labRow = NULL,Rowv=rowv,dendrogram='row',Colv=colv, scale="row",cexRow =0.5,trace="none",density.info="none",keysize=.8,key.xlab="")
 p
+# export heatmap as PDF
+pdf(file=paste(out_folder,name,"_heatmap.pdf",sep=''),20,25)
+heatmap.2(dat.norm_2,col=colorRampPalette(c("blue","black","yellow"))(256),labRow = FALSE,dendrogram='row',Rowv=rowv,Colv=colnames(dat.norm_2),scale="row",cexRow =0.5,trace="none",density.info="none",keysize=.8,key.xlab="",margins=c(15,14))
+dev.off()
 ```
 
 
-### - Volcano Plot 
+### - Volcano Plot
 * Volcano plot reporting adjusted p-value (−log10(p), y axis) as a function of log2 (fold change) between the groups (logFC, x axis).
 * Fold change(`r name`) of the expression level for a given gene was defined as the read counts of the gene in the `r comps[i,][2]` sample /the read counts in the `r comps[i,][3]` sample.
 * Genes that are identified as significant DEGs with `r sig_DEGs` are colored in red.
@@ -192,25 +190,25 @@ p
 resdata_1 = subset(resdata, p_adj!="NA")
 resdata_1$negative_Log10_padj <- -log10(resdata_1$p_adj)
 if (n1 < 2000 & n1 >= 200) {
-    resdata_1$Colour[resdata_1$p_adj < 0.05]="Significant"
+    resdata_1$Colour[resdata_1$p_adj < 0.05]="Significant(padj<0.05)"
     resdata_1$Colour[ resdata_1$p_adj >= 0.05]="Non-significant"
 }
 if (n1 >= 2000) {
     if (n2 < 2000) {
-    resdata_1$Colour[resdata_1$p_adj < 0.01]="Significant"
+    resdata_1$Colour[resdata_1$p_adj < 0.01]="Significant(padj<0.01)"
     resdata_1$Colour[ resdata_1$p_adj >= 0.01]="Non-significant"
     } else {
-      resdata_1$Colour[(abs(resdata_1$log2FC) >= 1) & (resdata_1$p_adj < 0.01)]="Significant"
+      resdata_1$Colour[(abs(resdata_1$log2FC) >= 1) & (resdata_1$p_adj < 0.01)]="Significant(padj<0.05,FC>2)"
       resdata_1$Colour[(abs(resdata_1$log2FC) < 1) | (resdata_1$p_adj >= 0.01)]="Non-significant"
     }
   }
   if (n1 < 200 & n1 >= 20) {
-    resdata_1$Colour[resdata_1$p_adj < 0.1]="Significant"
+    resdata_1$Colour[resdata_1$p_adj < 0.1]="Significant((padj<0.1))"
     resdata_1$Colour[ resdata_1$p_adj >= 0.1]="Non-significant"
   }
   if (n1 < 20) {
-    resdata_1$Colour[resdata_1$pvalue < 0.1]="Significant"
-    resdata_1$Colour[ resdata_1$pvalue >= 0.1]="Non-significant"
+    resdata_1$Colour[resdata_1$pvalue < 0.05]="Significant((pvalue<0.05))"
+    resdata_1$Colour[ resdata_1$pvalue >= 0.05]="Non-significant"
   }
 p <- plot_ly(resdata_1, x = ~log2FC, y = ~negative_Log10_padj, type = 'scatter',
         mode = "markers", color = ~Colour, colors = c("black", "red"), text = ~paste('Gene: ', Gene))%>%
@@ -218,6 +216,14 @@ p <- plot_ly(resdata_1, x = ~log2FC, y = ~negative_Log10_padj, type = 'scatter',
          yaxis = list(zeroline = FALSE),
          xaxis = list(zeroline = FALSE))
 p
+library(ggrepel)
+pdf(file=paste0(out_folder,name,"_Volcano.pdf"),14,10)
+resdata_1$label<-""  #####this is to save the label of your interested genes
+p<-ggplot(resdata_1,aes(x=log2FC,y=negative_Log10_padj,label=label))
+p<-p+geom_point(aes(color = resdata_1$Colour), size = 0.8)+scale_color_manual(values = c("black", "red"))
+p<-p+theme(panel.background = element_rect(fill = "white", colour = "black"))+geom_label_repel(point.padding = unit(0.1, "lines"))+labs(x = paste0("log2FoldChange (", name, ")"), y = "-log10(adjusted p-value)", title = "M -> MC", color = "")
+p
+dev.off()
 ```
 
 
@@ -229,41 +235,46 @@ p
 ```{r interactive MA_plot, echo=FALSE, message=FALSE, fig.height = 6, fig.width = 6, warning=FALSE}
 #volcanorObj <- volcanor(resdata1, )
 #volcanoly(resdata1, p=resdata1$padj)
-
 library(ggplot2)
 library(ggthemes)
 if (n1 < 2000 & n1 >= 200) {
-    resdata_1$Colour[(resdata_1$log2FC > 0 & resdata_1$p_adj <  0.05)]="Significant UpR"
-    resdata_1$Colour[(resdata_1$log2FC < 0 & resdata_1$p_adj <  0.05)]="Significant DownR"
+    resdata_1$Colour[(resdata_1$log2FC > 0 & resdata_1$p_adj <  0.05)]="Significant UpR(p_adj<0.05)"
+    resdata_1$Colour[(resdata_1$log2FC < 0 & resdata_1$p_adj <  0.05)]="Significant DownR(p_adj<0.05)"
     resdata_1$Colour[ resdata_1$p_adj >= 0.05]="Non-significant"
 }
 if (n1 >= 2000) {
     if (n2 < 2000) {
-    resdata_1$Colour[(resdata_1$log2FC > 0 & resdata_1$p_adj <  0.01)]="Significant UpR"
-    resdata_1$Colour[(resdata_1$log2FC < 0 & resdata_1$p_adj <  0.01)]="Significant DownR"
+    resdata_1$Colour[(resdata_1$log2FC > 0 & resdata_1$p_adj <  0.01)]="Significant UpR (p_adj<0.01)"
+    resdata_1$Colour[(resdata_1$log2FC < 0 & resdata_1$p_adj <  0.01)]="Significant DownR (p_adj<0.01)"
     resdata_1$Colour[ resdata_1$p_adj >= 0.01]="Non-significant"
     } else {
-      resdata_1$Colour[(resdata_1$log2FC > 1 & resdata_1$p_adj <  0.01)]="Significant UpR"
-      resdata_1$Colour[(resdata_1$log2FC < -1 & resdata_1$p_adj <  0.01)]="Significant DownR"
+      resdata_1$Colour[(resdata_1$log2FC >= 1 & resdata_1$p_adj <  0.01)]="Significant UpR(p_adj<0.01,FC>2)"
+      resdata_1$Colour[(resdata_1$log2FC <= -1 & resdata_1$p_adj <  0.01)]="Significant DownR(p_adj<0.01,FC>2)"
       resdata_1$Colour[(abs(resdata_1$log2FC) < 1) | (resdata_1$p_adj >= 0.01)]="Non-significant"
     }
   }
   if (n1 < 200 & n1 >= 20) {
-    resdata_1$Colour[(resdata_1$log2FC > 0 & resdata_1$p_adj <  0.1)]="Significant UpR"
-    resdata_1$Colour[(resdata_1$log2FC < 0 & resdata_1$p_adj <  0.1)]="Significant DownR"
+    resdata_1$Colour[(resdata_1$log2FC > 0 & resdata_1$p_adj <  0.1)]="Significant UpR(p_adj<0.1)"
+    resdata_1$Colour[(resdata_1$log2FC < 0 & resdata_1$p_adj <  0.1)]="Significant DownR(p_adj<0.1)"
     resdata_1$Colour[ resdata_1$p_adj >= 0.1]="Non-significant"
   }
   if (n1 < 20) {
-    resdata_1$Colour[(resdata_1$log2FC > 0 & resdata_1$pvalue <  0.1)]="Significant UpR"
-    resdata_1$Colour[(resdata_1$log2FC < 0 & resdata_1$pvalue <  0.1)]="Significant DownR"
-    resdata_1$Colour[ resdata_1$pvalue >= 0.1]="Non-significant"
+    resdata_1$Colour[(resdata_1$log2FC > 0 & resdata_1$pvalue <  0.05)]="Significant UpR(pvalue<0.05)"
+    resdata_1$Colour[(resdata_1$log2FC < 0 & resdata_1$pvalue <  0.05)]="Significant DownR(pvalue<0.05)"
+    resdata_1$Colour[ resdata_1$pvalue >= 0.05]="Non-significant"
   }
-
 resdata_1$log2Mean <- log2(resdata_1$baseMean + 1)
-plot <- ggplot(data=resdata_1, aes(x=log2Mean, y=log2FC, colour=Colour)) + geom_point(aes(text = paste("Gene:", resdata_1$Gene)), size = 1) + scale_color_manual( values=c("dark gray", "blue", "red")) + labs(x = "Log2 Mean_Expression", y = "Log2 Fold_Change", title = name) 
+plot <- ggplot(data=resdata_1, aes(x=log2Mean, y=log2FC, colour=Colour)) + geom_point(aes(text = paste("Gene:", resdata_1$Gene)), size = 1) + scale_color_manual( values=c("dark gray", "blue", "red")) + labs(x = "Log2 Mean_Expression", y = "Log2 Fold_Change", title = name)
 gg <- ggplotly(plot)
 gg
+#Export MA plot as a PDF file
+pdf(file=paste0(out_folder,name,"_MAplot.pdf"),16,9)
+resdata_1$label<-"" #####this is to save the label of your interested genes
+p<-ggplot(resdata_1,aes(x=log2Mean, y=log2FC,label=label))
+p<-p+geom_point(aes(color = resdata_1$Colour), size = 0.8)+scale_color_manual(values = c( "grey","blue","red"))
+p<-p+geom_hline(yintercept = c(0, -1, 1), linetype = c(1, 2, 2), color = c("black", "black", "black"))
+p<-p+theme(panel.background = element_rect(fill = "white", colour = "black"))+geom_label_repel(force = 1,box.padding = unit(0.35, "lines"),point.padding = unit(0.3,"lines"))
+p<-p+labs(x = "Log2 mean expression", title = name, color = "")
+p
+dev.off()
 ```
-
-
-
