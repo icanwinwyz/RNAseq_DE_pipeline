@@ -1,9 +1,4 @@
-#########################################################################
-# File Name: RNAseq_analysis.sh
-# Author: Di Wu
-# mail: di.wu@cshs.org
-# Created Time: Feb., 2019
-#########################################################################
+
 #!/bin/bash
 #!/bin/bash
 display_usage() {
